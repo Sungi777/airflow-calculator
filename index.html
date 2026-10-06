@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>風量計算 iPad版</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6f8;color:#18212b;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}.app{max-width:1050px;margin:auto;padding:16px}
+h1{font-size:27px;margin:0 0 4px}.sub{color:#68778a;margin-bottom:14px}.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}.card{background:#fff;border-radius:20px;padding:18px;box-shadow:0 2px 14px #0000000b;margin-bottom:14px}h2{font-size:19px;margin:0 0 13px}
+.fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}label{display:block;font-size:13px;color:#65758a;margin-bottom:5px}input,select{width:100%;min-width:0;height:48px;padding:11px 13px;border:1px solid #d6dde5;border-radius:11px;font-size:17px;background:#fff;display:block}input[type="date"]{-webkit-appearance:none;appearance:none;line-height:24px;padding-right:10px}.unit{display:flex;gap:7px;align-items:center}.unit input{flex:1}
+button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:750;background:#e7edf3;color:#087ee8}button.primary{background:#18212b;color:#fff}.actions{display:flex;flex-wrap:wrap;gap:9px}
+.diagram{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:360px;margin:auto}.cell{aspect-ratio:1;border:2px solid #d6dde5;border-radius:12px;background:#f9fafb;position:relative}.cell.active{border-color:#1683ff;background:#eef7ff}.cell em{position:absolute;left:8px;top:5px;color:#6b7b8f;font-style:normal;font-size:12px}.cell input{height:100%;border:0;background:transparent;text-align:center;padding-top:20px}
+.ductDiagram{height:210px;border:3px solid #8997a5;border-radius:16px;background:#eef2f5;position:relative;display:flex;align-items:center;justify-content:center;gap:9px;overflow:hidden}.ductLine{position:absolute;left:0;right:0;top:50%;height:2px;background:#aab4bf}.ductPoint{z-index:2;width:110px;height:110px;flex:0 0 110px;border-radius:50%;border:3px solid #3d83ee;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px}.ductPoint b{font-size:14px;color:#64748b;margin-bottom:2px}.ductPoint input{width:92px;height:44px;padding:4px 2px;border:0;background:transparent;text-align:center;font-size:18px;font-weight:600;outline:none}.ductPoint input::placeholder{color:#a7a7a7;font-weight:500}
+.result{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f7f9fb;border-radius:14px;padding:14px}.metric .v{font-size:25px;font-weight:800}.metric small{color:#66758a}.big{grid-column:1/-1}.big .v{font-size:34px}.status{margin-top:10px;text-align:center;padding:13px;border-radius:14px;font-size:19px;font-weight:800;background:#ddf7e6;color:#16713a}.status.warn{background:#fff2ce;color:#8a5c00}.status.ng{background:#fee0e0;color:#a21c1c}
+.headerFields>div{min-width:0}.dateInput{color:#18212b}.formula{background:#f7f9fb;border-radius:14px;padding:15px;line-height:2;font-size:16px}.formula strong{font-size:20px}.note{font-size:12px;color:#66758a;line-height:1.65}.footer{font-size:12px;color:#66758a;padding-bottom:20px}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.card{width:100%}.ductDiagram{max-width:100%;}.headerFields{grid-template-columns:1fr 1fr}}@media(max-width:760px){.grid{grid-template-columns:1fr}.app{padding:12px}.card{padding:14px}.fields{gap:8px}.ductDiagram{height:190px;gap:5px}.ductPoint{width:88px;height:88px;flex-basis:88px}.ductPoint input{width:72px;height:38px;font-size:16px}}
+@media print{body{background:#fff}.actions{display:none}.card{box-shadow:none;border:1px solid #ddd}}
+</style><link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#18212b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="風量計算">
+<link rel="apple-touch-icon" href="./icon-192.png"></head><body>
+<div class="app">
+<h1>🌬 風量計算・実測記録</h1><div class="sub">ダクト測定口 / 制気口｜実測風速 → 平均風速 → 風量</div>
+
+<section class="card"><h2>① 測定対象を選択</h2>
+<div class="actions"><button id="ductBtn" onclick="setType('duct')">🌀 ダクト測定口</button><button id="grilleBtn" class="primary" onclick="setType('grille')">▦ 制気口</button></div></section>
+
+<div class="grid">
+<section class="card"><h2>② 測定対象・寸法</h2>
+<div class="fields headerFields"><div><label>番号</label><input id="name" placeholder="例：SA-101 / D-01"></div><div><label>測定日</label><input id="date" class="dateInput" type="date"></div></div>
+
+<div id="ductFields" style="display:none;margin-top:12px"><label>ダクト形状</label><select id="ductShape" onchange="renderFormula();calc()"><option value="rect">角ダクト</option><option value="round">丸ダクト</option></select>
+<div class="fields" style="margin-top:10px"><div id="rw"><label>幅</label><div class="unit"><input id="w" type="number" value="600"><b>mm</b></div></div><div id="rh"><label>高さ</label><div class="unit"><input id="h" type="number" value="400"><b>mm</b></div></div><div id="rd" style="display:none"><label>直径</label><div class="unit"><input id="d" type="number" value="400"><b>mm</b></div></div></div></div>
+
+<div id="grilleFields" style="margin-top:12px"><label>有効開口面積の入力方法</label><select id="areaMode" onchange="renderFormula();calc()"><option value="direct">有効開口面積を直接入力</option><option value="rate">幅・高さ・有効開口率から計算</option></select>
+<div id="direct"><label style="margin-top:10px">有効開口面積</label><div class="unit"><input id="ae" type="number" value="0.156" step="0.001"><b>m²</b></div></div>
+<div id="rate" class="fields" style="display:none;margin-top:10px"><div><label>幅</label><div class="unit"><input id="gw" type="number" value="600"><b>mm</b></div></div><div><label>高さ</label><div class="unit"><input id="gh" type="number" value="400"><b>mm</b></div></div><div><label>有効開口率</label><div class="unit"><input id="ar" type="number" value="65" step="0.1"><b>%</b></div></div></div></div>
+<div class="fields" style="margin-top:12px"><div><label>設計風量</label><div class="unit"><input id="design" type="number" value="1200"><b>m³/h</b></div></div><div><label>測定者</label><input id="person" placeholder="氏名"></div></div>
+</section>
+
+<section class="card"><h2>③ 風速測定</h2>
+<div id="ductMeasure" style="display:none"><div class="note">ダクト測定口：中央3点の測定イメージ</div><div class="ductDiagram"><div class="ductLine"></div>
+<div class="ductPoint"><b>①</b><input id="v1" type="text" inputmode="decimal" step="0.01" placeholder="m/s"></div>
+<div class="ductPoint"><b>②</b><input id="v2" type="text" inputmode="decimal" step="0.01" placeholder="m/s"></div>
+<div class="ductPoint"><b>③</b><input id="v3" type="text" inputmode="decimal" step="0.01" placeholder="m/s"></div></div>
+<div class="note">平均風速 ＝ (①＋②＋③) ÷ 3</div></div>
+<div id="grilleMeasure"><div class="note">制気口：3〜9点を選択</div><div id="diagram" class="diagram"></div><div class="actions" style="margin-top:10px">
+<button onclick="setPoints(3)">3点</button><button onclick="setPoints(4)">4点</button><button onclick="setPoints(5)">5点</button><button onclick="setPoints(6)">6点</button><button onclick="setPoints(7)">7点</button><button onclick="setPoints(8)">8点</button><button onclick="setPoints(9)">9点</button></div><div id="count" class="note" style="margin-top:9px"></div></div>
+</section>
+
+<section class="card"><h2>④ 計算結果</h2><div class="result">
+<div class="metric"><small>測定点数</small><div id="n" class="v">-</div></div><div class="metric"><small>平均風速</small><div id="avg" class="v">-</div></div>
+<div class="metric"><small>断面積 / 有効開口面積</small><div id="area" class="v">-</div></div><div class="metric"><small>風量</small><div id="m3min" class="v">-</div><small>m³/min</small></div>
+<div class="metric big"><small>実測風量</small><div id="flow" class="v">-</div><small>m³/h</small></div></div><div id="status" class="status">測定値を入力してください</div></section>
+
+<section class="card"><h2>⑤ 数式</h2><div id="formula" class="formula"></div><p class="note">※制気口の有効開口面積は、可能ならメーカーのカタログ・仕様値を使用してください。</p></section>
+
+<section class="card"><h2>⑥ 記録</h2><label>備考</label><input id="memo" placeholder="例：フィルター清掃後"><div class="actions" style="margin-top:12px"><button class="primary" onclick="save()">結果を保存</button><button onclick="window.print()">印刷 / PDF</button><button onclick="clearAll()">入力クリア</button></div><div id="saved" class="note" style="margin-top:10px"></div></section>
+</div>
+<div class="footer">基本式：Q ＝ V × A × 3600　｜ Q＝風量(m³/h)、V＝平均風速(m/s)、A＝断面積または有効開口面積(m²)</div>
+</div>
+<script>
+let type="grille",points=6,vals=Array(9).fill("");
+const $=x=>document.getElementById(x);
+function setType(t){type=t;$("ductBtn").className=t==="duct"?"primary":"";$("grilleBtn").className=t==="grille"?"primary":"";$("ductFields").style.display=t==="duct"?"block":"none";$("grilleFields").style.display=t==="grille"?"block":"none";$("ductMeasure").style.display=t==="duct"?"block":"none";$("grilleMeasure").style.display=t==="grille"?"block":"none";renderFormula();calc()}
+function setPoints(n){points=n;render();calc()}
+function render(){let d=$("diagram");d.innerHTML="";for(let i=0;i<9;i++){let c=document.createElement("div");c.className="cell"+(i<points?" active":"");let e=document.createElement("em");e.textContent=i+1;c.appendChild(e);if(i<points){let x=document.createElement("input");x.type="number";x.step=".01";x.placeholder="m/s";x.value=vals[i];x.oninput=()=>{vals[i]=x.value;calc()};c.appendChild(x)}else c.style.opacity=".35";d.appendChild(c)}$("count").textContent=`測定点：${points}点（3〜9点）`}
+function areaValue(){if(type==="duct"){if($("ductShape").value==="round"){let d=+$("d").value/1000;return Math.PI*d*d/4}return (+$("w").value/1000)*(+$("h").value/1000)}if($("areaMode").value==="direct")return +$("ae").value||0;return (+$("gw").value/1000)*(+$("gh").value/1000)*(+$("ar").value/100)}
+function velocities(){if(type==="duct")return[1,2,3].map(i=>+$("v"+i).value).filter(v=>v>0);return vals.slice(0,points).map(Number).filter(v=>v>0)}
+function calc(){let vs=velocities(),a=areaValue();$("n").textContent=vs.length+"点";$("area").textContent=a?(a.toFixed(3)+" m²"):"-";if(!vs.length||!a){$("avg").textContent="-";$("flow").textContent="-";$("m3min").textContent="-";return}let v=vs.reduce((x,y)=>x+y,0)/vs.length,q=v*a*3600;$("avg").textContent=v.toFixed(2)+" m/s";$("flow").textContent=Math.round(q).toLocaleString();$("m3min").textContent=(q/60).toFixed(1);let des=+$("design").value||0,r=des?q/des*100:0,s=$("status");s.textContent=des?`設計風量達成率 ${r.toFixed(1)}%　${r>=90?"🟢 OK":r>=80?"🟡 注意":"🔴 NG"}`:"設計風量未入力";s.className="status "+(des?(r>=90?"":r>=80?"warn":"ng"):"")}
+function renderFormula(){if(type==="duct"){$("rw").style.display=$("rh").style.display=$("ductShape").value==="round"?"none":"block";$("rd").style.display=$("ductShape").value==="round"?"block":"none";$("formula").innerHTML='<strong>Q ＝ V × A × 3600</strong><br>V ＝ (①＋②＋③) ÷ 3<br>角ダクト：A ＝ 幅 × 高さ<br>丸ダクト：A ＝ π × D² ÷ 4<br>Q：風量（m³/h）　V：平均風速（m/s）　A：ダクト断面積（m²）'}else{$("direct").style.display=$("areaMode").value==="direct"?"block":"none";$("rate").style.display=$("areaMode").value==="rate"?"grid":"none";$("formula").innerHTML='<strong>Q ＝ V × Aₑ × 3600</strong><br>V ＝ 測定値の合計 ÷ 測定点数<br>直接入力：Aₑ ＝ 有効開口面積<br>率から計算：Aₑ ＝ 幅 × 高さ × 有効開口率<br>Q：風量（m³/h）　Aₑ：有効開口面積（m²）'}}
+function save(){calc();let r={type,name:$("name").value,date:$("date").value,person:$("person").value,memo:$("memo").value,avg:$("avg").textContent,flow:$("flow").textContent};localStorage.setItem("airflow",JSON.stringify(r));$("saved").textContent=`保存しました：${r.name||"名称未入力"}｜${r.avg}｜${r.flow} m³/h`}
+function clearAll(){vals=Array(9).fill("");["name","person","memo","v1","v2","v3"].forEach(i=>$(i)&&($(i).value=""));render();calc()}
+$("date").value=new Date().toISOString().slice(0,10);
+["w","h","d","gw","gh","ar","ae","design","v1","v2","v3"].forEach(i=>$(i)&&$(i).addEventListener("input",calc));
+setType("grille");render();renderFormula();calc();
+</script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js"));}</script></body></html>
