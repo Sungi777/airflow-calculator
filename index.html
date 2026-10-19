@@ -13,6 +13,11 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 .headerFields>div{min-width:0}.dateInput{color:#18212b}.formula{background:#f7f9fb;border-radius:14px;padding:15px;line-height:2;font-size:16px}.formula strong{font-size:20px}.note{font-size:12px;color:#66758a;line-height:1.65}.footer{font-size:12px;color:#66758a;padding-bottom:20px}
 @media (max-width:1100px){.grid{grid-template-columns:1fr}.card{width:100%}.ductDiagram{max-width:100%;}.headerFields{grid-template-columns:1fr 1fr}}@media(max-width:760px){.grid{grid-template-columns:1fr}.app{padding:12px}.card{padding:14px}.fields{gap:8px}.ductDiagram{height:190px;gap:5px}.ductPoint{width:88px;height:88px;flex-basis:88px}.ductPoint input{width:72px;height:38px;font-size:16px}}
 @media print{body{background:#fff}.actions{display:none}.card{box-shadow:none;border:1px solid #ddd}}
+
+#smokePanel .status{margin-top:8px}
+#smokePanel .result{grid-template-columns:1fr 1fr}
+@media(max-width:760px){#smokePanel .fields{grid-template-columns:1fr 1fr}}
+@media print{#categoryCard,.actions{display:none!important}}
 </style><link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#18212b">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,7 +30,51 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 <section class="card"><h2>① 測定対象を選択</h2>
 <div class="actions"><button id="ductBtn" onclick="setType('duct')">🌀 ダクト測定口</button><button id="grilleBtn" class="primary" onclick="setType('grille')">▦ 制気口</button></div></section>
 
-<div class="grid">
+
+<section class="card" id="categoryCard">
+<h2>計算カテゴリ</h2>
+<div class="actions">
+<button id="generalTab" class="primary" onclick="switchCategory('general')">一般風量（ダクト・制気口）</button>
+<button id="smokeTab" onclick="switchCategory('smoke')">排煙風量</button>
+</div>
+</section>
+<section class="card" id="smokePanel" style="display:none">
+<h2>🚨 排煙風量</h2>
+<div class="actions">
+<button id="smokeMeasuredTab" class="primary" onclick="switchSmokeMode('measured')">実測風量</button>
+<button id="smokeRequiredTab" onclick="switchSmokeMode('required')">必要風量</button>
+<button id="smokeCompareTab" onclick="switchSmokeMode('compare')">実測・必要の比較</button>
+</div>
+<div class="fields" style="margin-top:14px">
+<div><label>開口面積の入力方法</label><select id="smokeAreaMode" onchange="toggleSmokeAreaMode();calcSmoke()"><option value="dimensions">幅・高さから計算</option><option value="direct">開口面積を直接入力</option></select></div>
+<div id="smokeDirectAreaField" style="display:none"><label>開口面積</label><div class="unit"><input id="smokeDirectArea" type="number" min="0" step="0.001" placeholder="例：0.09"><b>m²</b></div></div>
+<div><label>排煙口番号</label><input id="smokeName" placeholder="例：SE-01"></div>
+<div><label>測定日</label><input id="smokeDate" type="date"></div>
+<div><label>幅</label><div class="unit"><input id="smokeW" type="number" value="300" min="0"><b>mm</b></div></div>
+<div><label>高さ</label><div class="unit"><input id="smokeH" type="number" value="300" min="0"><b>mm</b></div></div>
+<div><label>測定点①</label><div class="unit"><input id="smokeV1" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
+<div><label>測定点②</label><div class="unit"><input id="smokeV2" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
+<div><label>測定点③</label><div class="unit"><input id="smokeV3" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
+<div><label>測定点④</label><div class="unit"><input id="smokeV4" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
+<div><label>必要風量（資料・基準値）</label><div class="unit"><input id="smokeRequired" type="number" value="" min="0" step="0.1" placeholder="必要量"><b>m³/min</b></div></div>
+<div><label>有効開口率（必要な場合）</label><div class="unit"><input id="smokeRate" type="number" value="100" min="0" max="100" step="0.1"><b>%</b></div></div>
+<div><label>床面積（参考記録）</label><div class="unit"><input id="smokeFloor" type="number" value="" min="0" step="0.1" placeholder="例：35"><b>m²</b></div></div>
+</div>
+<div class="result" style="margin-top:14px">
+<div class="metric"><small>開口面積（幅×高さ）</small><div class="v" id="smokeArea">0.090 m²</div></div>
+<div class="metric"><small>実測風量</small><div class="v" id="smokeMeasured">-</div><small>m³/min</small></div>
+<div class="metric"><small>実測風量</small><div class="v" id="smokeMeasuredH">-</div><small>m³/h</small></div>
+<div class="metric"><small>必要風量</small><div class="v" id="smokeNeedResult">未入力</div><small>m³/min</small></div>
+<div class="metric"><small>実測 / 必要</small><div class="v" id="smokeRatio">-</div></div>
+<div class="metric big"><small>判定・比較</small><div id="smokeStatus" class="status">実測風速と必要風量を入力してください</div></div>
+</div>
+<div id="smokeFormula" class="formula" style="margin-top:14px"></div>
+<p class="note">注意：必要風量は建物条件・適用法令・設計図書・設備仕様により異なります。この欄は資料や設計条件で確認した必要風量を入力する方式です。床面積だけから必要風量を自動断定しません。開口面積を使う計算は、測定方法・有効開口の扱いを現場の仕様に合わせてください。</p>
+<div class="actions"><button class="primary" onclick="saveSmoke()">排煙測定を保存</button><button onclick="window.print()">印刷 / PDF</button><button onclick="clearSmoke()">排煙入力クリア</button></div>
+<div id="smokeSaved" class="note" style="margin-top:10px"></div>
+</section>
+
+<div class="grid" id="generalGrid">
 <section class="card"><h2>② 測定対象・寸法</h2>
 <div class="fields headerFields"><div><label>番号</label><input id="name" placeholder="例：SA-101 / D-01"></div><div><label>測定日</label><input id="date" class="dateInput" type="date"></div></div>
 
@@ -74,4 +123,66 @@ function clearAll(){vals=Array(9).fill("");["name","person","memo","v1","v2","v3
 $("date").value=new Date().toISOString().slice(0,10);
 ["w","h","d","gw","gh","ar","ae","design","v1","v2","v3"].forEach(i=>$(i)&&$(i).addEventListener("input",calc));
 setType("grille");render();renderFormula();calc();
+
+let mainCategory="general", smokeMode="measured";
+function switchCategory(c){
+ mainCategory=c;
+ $("generalGrid").style.display=c==="general"?"grid":"none";
+ $("smokePanel").style.display=c==="smoke"?"block":"none";
+ $("generalTab").className=c==="general"?"primary":"";
+ $("smokeTab").className=c==="smoke"?"primary":"";
+ if(c==="smoke") calcSmoke();
+}
+function switchSmokeMode(m){
+ smokeMode=m;
+ $("smokeMeasuredTab").className=m==="measured"?"primary":"";
+ $("smokeRequiredTab").className=m==="required"?"primary":"";
+ $("smokeCompareTab").className=m==="compare"?"primary":"";
+ calcSmoke();
+}
+function toggleSmokeAreaMode(){ $("smokeDirectAreaField").style.display=$("smokeAreaMode").value==="direct"?"block":"none"; $("smokeW").disabled=$("smokeAreaMode").value==="direct"; $("smokeH").disabled=$("smokeAreaMode").value==="direct"; $("smokeRate").disabled=$("smokeAreaMode").value==="direct"; }
+function calcSmoke(){
+ const w=(Number($("smokeW").value)||0)/1000;
+ const h=(Number($("smokeH").value)||0)/1000;
+ const rate=Math.max(0,Math.min(100,Number($("smokeRate").value)||0))/100;
+ const area=$("smokeAreaMode").value==="direct"?(Number($("smokeDirectArea").value)||0):w*h;
+ const effective=$("smokeAreaMode").value==="direct"?area:area*rate;
+ const velIds=["smokeV1","smokeV2","smokeV3","smokeV4"];
+ const vals=velIds.map(id=>$(id).value).filter(x=>x!==""&&Number(x)>=0).map(Number);
+ const v=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+ const measured=v!==null&&vals.length===4?v*effective*60:null;
+ const measuredH=measured===null?null:measured*60;
+ const need=Number($("smokeRequired").value);
+ $("smokeArea").textContent=effective.toFixed(3)+" m²";
+ $("smokeMeasured").textContent=measured===null?"-":measured.toFixed(1);
+ $("smokeMeasuredH").textContent=measuredH===null?"-":Math.round(measuredH).toLocaleString();
+ $("smokeNeedResult").textContent=$("smokeRequired").value===""?"未入力":need.toFixed(1);
+ $("smokeRatio").textContent=(measured!==null&&need>0)?(measured/need*100).toFixed(1)+"%":"-";
+ $("smokeFormula").innerHTML="<strong>平均風速 V ＝ (①＋②＋③＋④) ÷ 4</strong><br><strong>実測風量 Q（m³/min）＝ V × 開口面積 A（m²）× 60<br>実測風量 Q（m³/h）＝ V × 開口面積 A（m²）× 3600</strong><br>寸法入力：A ＝ 幅（mm）÷1000 × 高さ（mm）÷1000<br>直接入力：A ＝ 入力した開口面積（m²）<br>有効開口率を適用する場合は、現場の測定要領に合わせてください。<br>必要風量 ＝ 設計図書等で確認した値を入力";
+ const s=$("smokeStatus");
+ if(smokeMode==="required"){
+  s.textContent=$("smokeRequired").value===""?"必要風量を入力してください":"必要風量を登録中："+need.toFixed(1)+" m³/min";
+  s.className="status";
+ }else if(smokeMode==="measured"){
+  s.textContent=measured===null?"実測風速を入力してください":"実測風量："+measured.toFixed(1)+" m³/min（"+Math.round(measuredH).toLocaleString()+" m³/h）";
+  s.className="status";
+ }else if(measured!==null&&need>0){
+  const r=measured/need*100;
+  s.textContent=`達成率 ${r.toFixed(1)}%（実測 ${measured.toFixed(1)} m³/min（${Math.round(measuredH).toLocaleString()} m³/h） / 必要 ${need.toFixed(1)} m³/min）`;
+  s.className="status "+(r>=100?"":r>=90?"warn":"ng");
+ }else{
+  s.textContent="実測風速と必要風量を入力してください";
+  s.className="status";
+ }
+}
+function saveSmoke(){
+ calcSmoke();
+ const rec={category:"排煙風量",name:$("smokeName").value,date:$("smokeDate").value,width:$("smokeW").value,height:$("smokeH").value,velocities:[$("smokeV1").value,$("smokeV2").value,$("smokeV3").value,$("smokeV4").value],required:$("smokeRequired").value,floorArea:$("smokeFloor").value,measured:$("smokeMeasured").textContent,measuredH:$("smokeMeasuredH").textContent,ratio:$("smokeRatio").textContent};
+ let all=[];try{all=JSON.parse(localStorage.getItem("airflowSmokeRecords")||"[]")}catch(e){}
+ all.push(rec);localStorage.setItem("airflowSmokeRecords",JSON.stringify(all));
+ $("smokeSaved").textContent=`保存しました：${rec.name||"排煙口番号未入力"}｜実測 ${rec.measured} m³/min（${rec.measuredH} m³/h）｜必要 ${rec.required||"未入力"} m³/min`;
+}
+function clearSmoke(){["smokeName","smokeV","smokeRequired","smokeFloor"].forEach(id=>$(id).value="");calcSmoke()}
+["smokeW","smokeH","smokeV1","smokeV2","smokeV3","smokeV4","smokeDirectArea","smokeRequired","smokeRate","smokeFloor"].forEach(id=>$(id).addEventListener("input",calcSmoke));
+$("smokeDate").value=new Date().toISOString().slice(0,10);toggleSmokeAreaMode();
 </script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js"));}</script></body></html>
