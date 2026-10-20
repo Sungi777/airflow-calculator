@@ -99,14 +99,14 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 
 <section class="card"><h2>④ 計算結果</h2><div class="result">
 <div class="metric"><small>測定点数</small><div id="n" class="v">-</div></div><div class="metric"><small>平均風速</small><div id="avg" class="v">-</div></div>
-<div class="metric"><small>断面積 / 有効開口面積</small><div id="area" class="v">-</div></div><div class="metric"><small>風量</small><div id="m3min" class="v">-</div><small>m³/min</small></div>
-<div class="metric big"><small>実測風量</small><div id="flow" class="v">-</div><small>m³/h</small></div></div><div id="status" class="status">測定値を入力してください</div></section>
+<div class="metric"><small>断面積 / 有効開口面積</small><div id="area" class="v">-</div></div><div class="metric"><small>実測風量（毎分）</small><div id="m3min" class="v">-</div><small>m³/min</small></div>
+<div class="metric big"><small>実測風量（毎時）</small><div id="flow" class="v">-</div><small>m³/h</small></div></div><div id="status" class="status">測定値を入力してください</div></section>
 
 <section class="card"><h2>⑤ 数式</h2><div id="formula" class="formula"></div><p class="note">※制気口の有効開口面積は、可能ならメーカーのカタログ・仕様値を使用してください。</p></section>
 
 <section class="card"><h2>⑥ 記録</h2><label>備考</label><input id="memo" placeholder="例：フィルター清掃後"><div class="actions" style="margin-top:12px"><button class="primary" onclick="save()">結果を保存</button><button onclick="window.print()">印刷 / PDF</button><button onclick="clearAll()">入力クリア</button></div><div id="saved" class="note" style="margin-top:10px"></div></section>
 </div>
-<div class="footer">基本式：Q ＝ V × A × 3600　｜ Q＝風量(m³/h)、V＝平均風速(m/s)、A＝断面積または有効開口面積(m²)</div>
+<div class="footer">基本式：Q（m³/min）＝ V × A × 60 ／ Q（m³/h）＝ V × A × 3600　｜ V＝平均風速(m/s)、A＝断面積または有効開口面積(m²)</div>
 </div>
 <script>
 let type="grille",points=6,vals=Array(9).fill("");
