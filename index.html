@@ -34,11 +34,11 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 <button id="smokeTab" onclick="switchCategory('smoke')">🚨 排煙口</button>
 </div></section>
 <section class="card" id="smokePanel" style="display:none">
-<h2>🚨 排煙口・HS・天井扇 風量計算</h2>
+<h2>排煙・換気器具の風量計算</h2>
 <div class="fields">
-<div><label>測定日</label><input id="smokeDate" type="date"></div>
+<div><label>① 測定日</label><input id="smokeDate" type="date"></div>
 <div><label>器具番号</label><input id="smokeName" placeholder="例：SE-01"></div>
-<div><label>器具種類</label><select id="smokeDevice" onchange="updateSmokeSizes();calcSmoke()"><option value="排煙口">排煙口</option><option value="HS">HS</option><option value="天井扇">天井扇</option></select></div>
+<div><label>② 器具種類</label><select id="smokeDevice" onchange="updateSmokeSizes();calcSmoke()"><option value="排煙口">排煙口</option><option value="HS">HS</option><option value="天井扇">天井扇</option></select></div>
 <div><label>開口寸法の入力方法</label><select id="smokeAreaMode" onchange="toggleSmokeAreaMode();calcSmoke()"><option value="size">サイズ一覧から選択</option><option value="dimensions">幅・高さを入力</option><option value="direct">開口面積を直接入力</option></select></div>
 <div id="smokeSizeField"><label>器具サイズ</label><select id="smokeSize" onchange="applySmokeSize();calcSmoke()"><option value="300x300">300 × 300 mm</option><option value="400x400">400 × 400 mm</option><option value="500x500">500 × 500 mm</option><option value="600x600">600 × 600 mm</option><option value="300x600">300 × 600 mm</option><option value="400x600">400 × 600 mm</option><option value="custom">その他（寸法入力）</option></select></div>
 <div id="smokeDirectAreaField" style="display:none"><label>開口面積</label><div class="unit"><input id="smokeDirectArea" type="number" min="0" step="0.001" placeholder="例：0.09"><b>m²</b></div></div>
