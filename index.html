@@ -34,41 +34,67 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 <button id="smokeTab" onclick="switchCategory('smoke')">🚨 排煙口</button>
 </div></section>
 <section class="card" id="smokePanel" style="display:none">
-<h2>🚨 排煙風量</h2>
-<div class="actions">
-<button id="smokeMeasuredTab" class="primary" onclick="switchSmokeMode('measured')">実測風量</button>
-<button id="smokeRequiredTab" onclick="switchSmokeMode('required')">必要風量</button>
-<button id="smokeCompareTab" onclick="switchSmokeMode('compare')">実測・必要の比較</button>
-</div>
-<div class="fields" style="margin-top:14px">
-<div><label>開口面積の入力方法</label><select id="smokeAreaMode" onchange="toggleSmokeAreaMode();calcSmoke()"><option value="dimensions">幅・高さから計算</option><option value="direct">開口面積を直接入力</option></select></div>
-<div id="smokeDirectAreaField" style="display:none"><label>開口面積</label><div class="unit"><input id="smokeDirectArea" type="number" min="0" step="0.001" placeholder="例：0.09"><b>m²</b></div></div>
-<div><label>排煙口番号</label><input id="smokeName" placeholder="例：SE-01"></div>
+<h2>🚨 排煙口・HS・天井扇 風量計算</h2>
+<div class="fields">
 <div><label>測定日</label><input id="smokeDate" type="date"></div>
-<div><label>幅</label><div class="unit"><input id="smokeW" type="number" value="300" min="0"><b>mm</b></div></div>
-<div><label>高さ</label><div class="unit"><input id="smokeH" type="number" value="300" min="0"><b>mm</b></div></div>
-<div><label>測定点①</label><div class="unit"><input id="smokeV1" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
-<div><label>測定点②</label><div class="unit"><input id="smokeV2" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
-<div><label>測定点③</label><div class="unit"><input id="smokeV3" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
-<div><label>測定点④</label><div class="unit"><input id="smokeV4" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
-<div><label>必要風量（資料・基準値）</label><div class="unit"><input id="smokeRequired" type="number" value="" min="0" step="0.1" placeholder="必要量"><b>m³/min</b></div></div>
-<div><label>有効開口率（必要な場合）</label><div class="unit"><input id="smokeRate" type="number" value="100" min="0" max="100" step="0.1"><b>%</b></div></div>
-<div><label>床面積（参考記録）</label><div class="unit"><input id="smokeFloor" type="number" value="" min="0" step="0.1" placeholder="例：35"><b>m²</b></div></div>
+<div><label>器具番号</label><input id="smokeName" placeholder="例：SE-01"></div>
+<div><label>器具種類</label><select id="smokeDevice" onchange="updateSmokeSizes();calcSmoke()"><option value="排煙口">排煙口</option><option value="HS">HS</option><option value="天井扇">天井扇</option></select></div>
+<div><label>開口寸法の入力方法</label><select id="smokeAreaMode" onchange="toggleSmokeAreaMode();calcSmoke()"><option value="size">サイズ一覧から選択</option><option value="dimensions">幅・高さを入力</option><option value="direct">開口面積を直接入力</option></select></div>
+<div id="smokeSizeField"><label>器具サイズ</label><select id="smokeSize" onchange="applySmokeSize();calcSmoke()"><option value="300x300">300 × 300 mm</option><option value="400x400">400 × 400 mm</option><option value="500x500">500 × 500 mm</option><option value="600x600">600 × 600 mm</option><option value="300x600">300 × 600 mm</option><option value="400x600">400 × 600 mm</option><option value="custom">その他（寸法入力）</option></select></div>
+<div id="smokeDirectAreaField" style="display:none"><label>開口面積</label><div class="unit"><input id="smokeDirectArea" type="number" min="0" step="0.001" placeholder="例：0.09"><b>m²</b></div></div>
+<div id="smokeWidthField"><label>幅</label><div class="unit"><input id="smokeW" type="number" value="300" min="0"><b>mm</b></div></div>
+<div id="smokeHeightField"><label>高さ</label><div class="unit"><input id="smokeH" type="number" value="300" min="0"><b>mm</b></div></div>
 </div>
+<div class="grid" style="margin-top:14px">
+<div class="card" style="margin:0;padding:12px;box-shadow:none;background:#f7f9fb">
+<h2>実測風速（m/s）</h2>
+<div class="fields">
+<div><label>測定点①</label><input id="smokeV1" type="number" min="0" step="0.01" placeholder="m/s"></div>
+<div><label>測定点②</label><input id="smokeV2" type="number" min="0" step="0.01" placeholder="m/s"></div>
+<div><label>測定点③</label><input id="smokeV3" type="number" min="0" step="0.01" placeholder="m/s"></div>
+<div><label>測定点④</label><input id="smokeV4" type="number" min="0" step="0.01" placeholder="m/s"></div>
+</div></div>
+<div class="card" style="margin:0;padding:12px;box-shadow:none;background:#f7f9fb">
+<h2>測定位置イメージ</h2>
+<svg viewBox="0 0 260 180" style="width:100%;max-height:220px" role="img" aria-label="測定点4点の位置イメージ">
+<rect x="15" y="10" width="230" height="160" rx="8" fill="#fff" stroke="#8997a5" stroke-width="3"/>
+<g fill="#e7f1ff" stroke="#3478e8" stroke-width="2">
+<circle cx="80" cy="55" r="23"/><circle cx="180" cy="55" r="23"/><circle cx="80" cy="125" r="23"/><circle cx="180" cy="125" r="23"/>
+</g><g fill="#18212b" font-size="18" text-anchor="middle" dominant-baseline="middle"><text x="80" y="55">①</text><text x="180" y="55">②</text><text x="80" y="125">③</text><text x="180" y="125">④</text></g></svg>
+<p class="note">位置はイメージです。器具・測定要領に合わせて測定してください。</p>
+</div></div>
 <div class="result" style="margin-top:14px">
+<div class="metric"><small>平均風速</small><div class="v" id="smokeAvg">-</div><small>m/s</small></div>
 <div class="metric"><small>開口面積（幅×高さ）</small><div class="v" id="smokeArea">0.090 m²</div></div>
 <div class="metric"><small>実測風量</small><div class="v" id="smokeMeasured">-</div><small>m³/min</small></div>
 <div class="metric"><small>実測風量</small><div class="v" id="smokeMeasuredH">-</div><small>m³/h</small></div>
-<div class="metric"><small>必要風量</small><div class="v" id="smokeNeedResult">未入力</div><small>m³/min</small></div>
-<div class="metric"><small>実測 / 必要</small><div class="v" id="smokeRatio">-</div></div>
-<div class="metric big"><small>判定・比較</small><div id="smokeStatus" class="status">実測風速と必要風量を入力してください</div></div>
 </div>
-<div id="smokeFormula" class="formula" style="margin-top:14px"></div>
-<p class="note">注意：必要風量は建物条件・適用法令・設計図書・設備仕様により異なります。この欄は資料や設計条件で確認した必要風量を入力する方式です。床面積だけから必要風量を自動断定しません。開口面積を使う計算は、測定方法・有効開口の扱いを現場の仕様に合わせてください。</p>
-<div class="actions"><button class="primary" onclick="saveSmoke()">排煙測定を保存</button><button onclick="window.print()">印刷 / PDF</button><button onclick="clearSmoke()">排煙入力クリア</button></div>
-<div id="smokeSaved" class="note" style="margin-top:10px"></div>
+<section class="card" style="margin-top:12px;margin-bottom:0;padding:12px;background:#f7f9fb;box-shadow:none">
+<h2>⑧ 有効開口面積・有効開口率</h2>
+<div class="fields">
+<div><label>有効開口面積</label><div class="unit"><input id="smokeEffectiveArea" type="number" min="0" step="0.001" placeholder="仕様値・m²"><b>m²</b></div></div>
+<div><label>有効開口率（自動計算）</label><div class="unit"><input id="smokeRate" type="number" min="0" max="100" step="0.1" placeholder="％"><b>%</b></div></div>
+</div>
+<p class="note">有効開口面積が分かる場合は入力すると開口率を計算します。開口率が分かる場合は入力すると有効開口面積を計算します。仕様値がない場合、外形面積を有効開口面積と同一とはみなしません。</p>
 </section>
-
+<details class="card" id="smokeDetails" style="margin-top:12px;margin-bottom:0">
+<summary style="font-size:18px;font-weight:800;cursor:pointer">⑨〜⑬ 詳細計算（必要な場合に開く）</summary>
+<div class="fields" style="margin-top:14px">
+<div><label>⑨ 設計風速</label><div class="unit"><input id="smokeDesignVelocity" type="number" min="0" step="0.01" placeholder="m/s"><b>m/s</b></div></div>
+<div><label>⑩ 設計風量</label><div class="unit"><input id="smokeDesignFlow" type="number" min="0" step="0.1" placeholder="m³/min または m³/h"><select id="smokeDesignUnit" style="width:100px"><option value="min">m³/min</option><option value="h">m³/h</option></select></div></div>
+<div><label>⑪ 必要風量</label><div class="unit"><input id="smokeRequired" type="number" min="0" step="0.1" placeholder="必要風量"><select id="smokeRequiredUnit" style="width:100px"><option value="min">m³/min</option><option value="h">m³/h</option></select></div></div>
+<div><label>⑫ 床面積（参考記録）</label><div class="unit"><input id="smokeFloor" type="number" min="0" step="0.1" placeholder="例：35"><b>m²</b></div></div>
+<div class="metric"><small>⑬ 必要風量に対する実測風量</small><div class="v" id="smokeRatio">-</div><small>実測風量 ÷ 必要風量 × 100</small></div>
+<div class="metric"><small>設計風量（換算値）</small><div class="v" id="smokeDesignFlowConverted">-</div></div>
+<div class="metric"><small>設計風速から計算した風量</small><div class="v" id="smokeDesignCalcFlow">-</div></div>
+<div class="metric"><small>必要風量（換算値）</small><div class="v" id="smokeNeedResult">未入力</div></div>
+</div>
+<p class="note">設計風速・設計風量・有効開口面積のうち、計算条件がそろう項目は相互に算出します。必要風量は設計図書・適用基準で確認してください。床面積だけから必要風量を自動決定しません。</p>
+<div id="smokeFormula" class="formula" style="margin-top:12px"></div>
+</details>
+<div class="actions" style="margin-top:14px"><button class="primary" onclick="saveSmoke()">測定記録を保存</button><button onclick="showSmokeHistory()">履歴を見る</button><button onclick="window.print()">印刷 / PDF</button><button onclick="clearSmoke()">入力クリア</button></div>
+<div id="smokeSaved" class="note" style="margin-top:10px"></div><div id="smokeHistory" class="note" style="margin-top:10px"></div>
+</section>
 <div class="grid" id="generalGrid">
 <section class="card"><h2>② 寸法・測定情報</h2>
 <div class="fields headerFields"><div><label>番号</label><input id="name" placeholder="例：SA-101 / D-01"></div><div><label>測定日</label><input id="date" class="dateInput" type="date"></div></div>
@@ -119,68 +145,69 @@ $("date").value=new Date().toISOString().slice(0,10);
 ["w","h","d","gw","gh","ar","ae","design","v1","v2","v3"].forEach(i=>$(i)&&$(i).addEventListener("input",calc));
 setType("grille");render();renderFormula();calc();
 
-let mainCategory="grille", smokeMode="measured";
+let mainCategory="grille";
 function switchCategory(c){
- mainCategory=c;
- const smoke=c==="smoke";
- $("generalGrid").style.display=smoke?"none":"grid";
- $("smokePanel").style.display=smoke?"block":"none";
- $("ductBtn").className=c==="duct"?"primary":"";
- $("grilleBtn").className=c==="grille"?"primary":"";
- $("smokeTab").className=smoke?"primary":"";
- if(!smoke) setType(c);
- if(smoke) calcSmoke();
+ mainCategory=c;const smoke=c==="smoke";
+ $("generalGrid").style.display=smoke?"none":"grid";$("smokePanel").style.display=smoke?"block":"none";
+ $("ductBtn").className=c==="duct"?"primary":"";$("grilleBtn").className=c==="grille"?"primary":"";$("smokeTab").className=smoke?"primary":"";
+ if(!smoke)setType(c);if(smoke)calcSmoke();
 }
-function switchSmokeMode(m){
- smokeMode=m;
- $("smokeMeasuredTab").className=m==="measured"?"primary":"";
- $("smokeRequiredTab").className=m==="required"?"primary":"";
- $("smokeCompareTab").className=m==="compare"?"primary":"";
- calcSmoke();
+function updateSmokeSizes(){
+ const d=$("smokeDevice").value;
+ const opts=d==="排煙口"?[["300x300","300 × 300 mm"],["400x400","400 × 400 mm"],["500x500","500 × 500 mm"],["600x600","600 × 600 mm"],["300x600","300 × 600 mm"],["400x600","400 × 600 mm"],["custom","その他（寸法入力）"]]:[["custom","寸法を入力"]];
+ $("smokeSize").innerHTML=opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join("");
+ $("smokeAreaMode").value=d==="排煙口"?"size":"dimensions";toggleSmokeAreaMode();applySmokeSize();
 }
-function toggleSmokeAreaMode(){ $("smokeDirectAreaField").style.display=$("smokeAreaMode").value==="direct"?"block":"none"; $("smokeW").disabled=$("smokeAreaMode").value==="direct"; $("smokeH").disabled=$("smokeAreaMode").value==="direct"; $("smokeRate").disabled=$("smokeAreaMode").value==="direct"; }
+function applySmokeSize(){
+ const val=$("smokeSize").value;
+ if(val!=="custom"&&val.includes("x")){const [w,h]=val.split("x").map(Number);$("smokeW").value=w;$("smokeH").value=h;}
+ if(val==="custom")$("smokeAreaMode").value="dimensions";
+ toggleSmokeAreaMode();calcSmoke();
+}
+function toggleSmokeAreaMode(){
+ const mode=$("smokeAreaMode").value;
+ $("smokeSizeField").style.display=mode==="size"?"block":"none";
+ $("smokeDirectAreaField").style.display=mode==="direct"?"block":"none";
+ $("smokeWidthField").style.display=mode==="direct"?"none":"block";
+ $("smokeHeightField").style.display=mode==="direct"?"none":"block";
+ $("smokeW").disabled=mode==="size";$("smokeH").disabled=mode==="size";
+}
 function calcSmoke(){
- const w=(Number($("smokeW").value)||0)/1000;
- const h=(Number($("smokeH").value)||0)/1000;
- const rate=Math.max(0,Math.min(100,Number($("smokeRate").value)||0))/100;
- const area=$("smokeAreaMode").value==="direct"?(Number($("smokeDirectArea").value)||0):w*h;
- const effective=$("smokeAreaMode").value==="direct"?area:area*rate;
- const velIds=["smokeV1","smokeV2","smokeV3","smokeV4"];
- const vals=velIds.map(id=>$(id).value).filter(x=>x!==""&&Number(x)>=0).map(Number);
- const v=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
- const measured=v!==null&&vals.length===4?v*effective*60:null;
- const measuredH=measured===null?null:measured*60;
- const need=Number($("smokeRequired").value);
- $("smokeArea").textContent=effective.toFixed(3)+" m²";
- $("smokeMeasured").textContent=measured===null?"-":measured.toFixed(1);
+ const mode=$("smokeAreaMode").value;
+ const w=(Number($("smokeW").value)||0)/1000,h=(Number($("smokeH").value)||0)/1000;
+ const outer=mode==="direct"?(Number($("smokeDirectArea").value)||0):w*h;
+ let effective=Number($("smokeEffectiveArea").value)||0,rate=Number($("smokeRate").value)||0;
+ if($("smokeEffectiveArea").value!==""&&outer>0){rate=effective/outer*100;$("smokeRate").value=Number.isFinite(rate)?rate.toFixed(1):"";}
+ else if($("smokeRate").value!==""&&outer>0){effective=outer*rate/100;$("smokeEffectiveArea").value=effective.toFixed(3);}
+ else if(mode==="direct"){effective=outer;if(!$("smokeEffectiveArea").value)$("smokeEffectiveArea").value=outer?outer.toFixed(3):"";}
+ const usedArea=effective>0?effective:outer;
+ const ids=["smokeV1","smokeV2","smokeV3","smokeV4"],vs=ids.map(id=>$(id).value).filter(x=>x!==""&&Number(x)>=0).map(Number);
+ const avg=vs.length===4?vs.reduce((a,b)=>a+b,0)/4:null;
+ const measured=avg!==null&&usedArea>0?avg*usedArea*60:null, measuredH=measured===null?null:measured*60;
+ $("smokeAvg").textContent=avg===null?"-":avg.toFixed(2);
+ $("smokeArea").textContent=outer.toFixed(3)+" m²";
+ $("smokeMeasured").textContent=measured===null?"-":measured.toFixed(2);
  $("smokeMeasuredH").textContent=measuredH===null?"-":Math.round(measuredH).toLocaleString();
- $("smokeNeedResult").textContent=$("smokeRequired").value===""?"未入力":need.toFixed(1);
- $("smokeRatio").textContent=(measured!==null&&need>0)?(measured/need*100).toFixed(1)+"%":"-";
- $("smokeFormula").innerHTML="<strong>平均風速 V ＝ (①＋②＋③＋④) ÷ 4</strong><br><strong>実測風量 Q（m³/min）＝ V × 開口面積 A（m²）× 60<br>実測風量 Q（m³/h）＝ V × 開口面積 A（m²）× 3600</strong><br>寸法入力：A ＝ 幅（mm）÷1000 × 高さ（mm）÷1000<br>直接入力：A ＝ 入力した開口面積（m²）<br>有効開口率を適用する場合は、現場の測定要領に合わせてください。<br>必要風量 ＝ 設計図書等で確認した値を入力";
- const s=$("smokeStatus");
- if(smokeMode==="required"){
-  s.textContent=$("smokeRequired").value===""?"必要風量を入力してください":"必要風量を登録中："+need.toFixed(1)+" m³/min";
-  s.className="status";
- }else if(smokeMode==="measured"){
-  s.textContent=measured===null?"実測風速を入力してください":"実測風量："+measured.toFixed(1)+" m³/min（"+Math.round(measuredH).toLocaleString()+" m³/h）";
-  s.className="status";
- }else if(measured!==null&&need>0){
-  const r=measured/need*100;
-  s.textContent=`達成率 ${r.toFixed(1)}%（実測 ${measured.toFixed(1)} m³/min（${Math.round(measuredH).toLocaleString()} m³/h） / 必要 ${need.toFixed(1)} m³/min）`;
-  s.className="status "+(r>=100?"":r>=90?"warn":"ng");
- }else{
-  s.textContent="実測風速と必要風量を入力してください";
-  s.className="status";
- }
+ const dv=Number($("smokeDesignVelocity").value)||0, df=Number($("smokeDesignFlow").value)||0, du=$("smokeDesignUnit").value;
+ const designFlowMin=df?(du==="h"?df/60:df):null;
+ let designCalc=null;if(dv>0&&usedArea>0)designCalc=dv*usedArea*60;
+ if(dv>0&&usedArea>0&&$("smokeDesignFlow").value===""){ $("smokeDesignFlowConverted").textContent=designCalc.toFixed(2)+" m³/min / "+Math.round(designCalc*60)+" m³/h"; }
+ else $("smokeDesignFlowConverted").textContent=designFlowMin===null?"-":designFlowMin.toFixed(2)+" m³/min / "+Math.round(designFlowMin*60)+" m³/h";
+ $("smokeDesignCalcFlow").textContent=designCalc===null?"-":designCalc.toFixed(2)+" m³/min / "+Math.round(designCalc*60)+" m³/h";
+ const needRaw=Number($("smokeRequired").value),nu=$("smokeRequiredUnit").value,needMin=$("smokeRequired").value===""?null:(nu==="h"?needRaw/60:needRaw);
+ $("smokeNeedResult").textContent=needMin===null?"未入力":needMin.toFixed(2)+" m³/min / "+Math.round(needMin*60)+" m³/h";
+ $("smokeRatio").textContent=measured!==null&&needMin>0?(measured/needMin*100).toFixed(1)+"%":"-";
+ $("smokeFormula").innerHTML="<strong>実測風量 Q = 平均風速 V × 有効開口面積 A × 60（m³/min）</strong><br>m³/h = m³/min × 60<br>外形面積 = 幅（m）× 高さ（m）<br>有効開口率 = 有効開口面積 ÷ 外形面積 × 100<br>設計風量 = 設計風速 × 有効開口面積 × 60";
 }
 function saveSmoke(){
- calcSmoke();
- const rec={category:"排煙風量",name:$("smokeName").value,date:$("smokeDate").value,width:$("smokeW").value,height:$("smokeH").value,velocities:[$("smokeV1").value,$("smokeV2").value,$("smokeV3").value,$("smokeV4").value],required:$("smokeRequired").value,floorArea:$("smokeFloor").value,measured:$("smokeMeasured").textContent,measuredH:$("smokeMeasuredH").textContent,ratio:$("smokeRatio").textContent};
- let all=[];try{all=JSON.parse(localStorage.getItem("airflowSmokeRecords")||"[]")}catch(e){}
- all.push(rec);localStorage.setItem("airflowSmokeRecords",JSON.stringify(all));
- $("smokeSaved").textContent=`保存しました：${rec.name||"排煙口番号未入力"}｜実測 ${rec.measured} m³/min（${rec.measuredH} m³/h）｜必要 ${rec.required||"未入力"} m³/min`;
+ calcSmoke();const rec={category:$("smokeDevice").value,name:$("smokeName").value,date:$("smokeDate").value,width:$("smokeW").value,height:$("smokeH").value,mode:$("smokeAreaMode").value,area:$("smokeArea").textContent,velocities:["smokeV1","smokeV2","smokeV3","smokeV4"].map(id=>$(id).value),measured:$("smokeMeasured").textContent,measuredH:$("smokeMeasuredH").textContent,ratio:$("smokeRatio").textContent,required:$("smokeRequired").value,floorArea:$("smokeFloor").value};
+ let all=[];try{all=JSON.parse(localStorage.getItem("airflowSmokeRecords")||"[]")}catch(e){}all.push(rec);localStorage.setItem("airflowSmokeRecords",JSON.stringify(all));$("smokeSaved").textContent=`保存しました：${rec.date}｜${rec.category} ${rec.name}｜実測 ${rec.measured} m³/min / ${rec.measuredH} m³/h`;
 }
-function clearSmoke(){["smokeName","smokeV","smokeRequired","smokeFloor"].forEach(id=>$(id).value="");calcSmoke()}
-["smokeW","smokeH","smokeV1","smokeV2","smokeV3","smokeV4","smokeDirectArea","smokeRequired","smokeRate","smokeFloor"].forEach(id=>$(id).addEventListener("input",calcSmoke));
-$("smokeDate").value=new Date().toISOString().slice(0,10);toggleSmokeAreaMode();
+function showSmokeHistory(){
+ let all=[];try{all=JSON.parse(localStorage.getItem("airflowSmokeRecords")||"[]")}catch(e){}
+ $("smokeHistory").innerHTML=all.length?("<strong>保存履歴</strong><br>"+all.slice().reverse().map(r=>`${r.date||"日付なし"}｜${r.category||"排煙口"} ${r.name||""}｜${r.measured} m³/min / ${r.measuredH} m³/h`).join("<br>")):"保存履歴はありません。";
+}
+function clearSmoke(){["smokeName","smokeV1","smokeV2","smokeV3","smokeV4","smokeDirectArea","smokeEffectiveArea","smokeRate","smokeDesignVelocity","smokeDesignFlow","smokeRequired","smokeFloor"].forEach(id=>$(id).value="");calcSmoke();}
+["smokeW","smokeH","smokeV1","smokeV2","smokeV3","smokeV4","smokeDirectArea","smokeEffectiveArea","smokeRate","smokeDesignVelocity","smokeDesignFlow","smokeRequired","smokeFloor"].forEach(id=>$(id).addEventListener("input",calcSmoke));
+$("smokeDate").value=new Date().toISOString().slice(0,10);updateSmokeSizes();toggleSmokeAreaMode();calcSmoke();
 </script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js"));}</script></body></html>
