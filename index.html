@@ -27,17 +27,12 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 <div class="app">
 <h1>🌬 風量計算・実測記録</h1><div class="sub">ダクト測定口 / 制気口｜実測風速 → 平均風速 → 風量</div>
 
-<section class="card"><h2>① 測定対象を選択</h2>
-<div class="actions"><button id="ductBtn" onclick="setType('duct')">🌀 ダクト測定口</button><button id="grilleBtn" class="primary" onclick="setType('grille')">▦ 制気口</button></div></section>
-
-
-<section class="card" id="categoryCard">
-<h2>計算カテゴリ</h2>
+<section class="card" id="categoryCard"><h2>① 測定対象を選択</h2>
 <div class="actions">
-<button id="generalTab" class="primary" onclick="switchCategory('general')">一般風量（ダクト・制気口）</button>
-<button id="smokeTab" onclick="switchCategory('smoke')">排煙風量</button>
-</div>
-</section>
+<button id="ductBtn" onclick="switchCategory('duct')">🌀 ダクト測定口</button>
+<button id="grilleBtn" class="primary" onclick="switchCategory('grille')">▦ 制気口</button>
+<button id="smokeTab" onclick="switchCategory('smoke')">🚨 排煙口</button>
+</div></section>
 <section class="card" id="smokePanel" style="display:none">
 <h2>🚨 排煙風量</h2>
 <div class="actions">
@@ -75,7 +70,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 </section>
 
 <div class="grid" id="generalGrid">
-<section class="card"><h2>② 測定対象・寸法</h2>
+<section class="card"><h2>② 寸法・測定情報</h2>
 <div class="fields headerFields"><div><label>番号</label><input id="name" placeholder="例：SA-101 / D-01"></div><div><label>測定日</label><input id="date" class="dateInput" type="date"></div></div>
 
 <div id="ductFields" style="display:none;margin-top:12px"><label>ダクト形状</label><select id="ductShape" onchange="renderFormula();calc()"><option value="rect">角ダクト</option><option value="round">丸ダクト</option></select>
@@ -124,14 +119,17 @@ $("date").value=new Date().toISOString().slice(0,10);
 ["w","h","d","gw","gh","ar","ae","design","v1","v2","v3"].forEach(i=>$(i)&&$(i).addEventListener("input",calc));
 setType("grille");render();renderFormula();calc();
 
-let mainCategory="general", smokeMode="measured";
+let mainCategory="grille", smokeMode="measured";
 function switchCategory(c){
  mainCategory=c;
- $("generalGrid").style.display=c==="general"?"grid":"none";
- $("smokePanel").style.display=c==="smoke"?"block":"none";
- $("generalTab").className=c==="general"?"primary":"";
- $("smokeTab").className=c==="smoke"?"primary":"";
- if(c==="smoke") calcSmoke();
+ const smoke=c==="smoke";
+ $("generalGrid").style.display=smoke?"none":"grid";
+ $("smokePanel").style.display=smoke?"block":"none";
+ $("ductBtn").className=c==="duct"?"primary":"";
+ $("grilleBtn").className=c==="grille"?"primary":"";
+ $("smokeTab").className=smoke?"primary":"";
+ if(!smoke) setType(c);
+ if(smoke) calcSmoke();
 }
 function switchSmokeMode(m){
  smokeMode=m;
