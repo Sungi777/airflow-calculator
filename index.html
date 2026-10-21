@@ -46,7 +46,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 </div>
 <div id="smokeEffectiveFields" style="margin-top:12px;display:grid;grid-template-columns:1fr;gap:12px">
 <div id="smokeOuterAreaMetric" class="metric"><small>開口面積（幅×高さ）</small><div class="v" id="smokeOuterAreaResult">-</div><small>m²</small></div><div id="smokeOuterAreaDirectField" style="display:none"><label>開口面積（外形面積）</label><div class="unit"><input id="smokeOuterAreaDirect" type="number" min="0" step="0.001" placeholder="例：0.090" oninput="calcSmoke()"><b>m²</b></div></div>
-<div><label id="smokeEffectiveAreaLabel">有効開口面積</label><div class="unit"><input id="smokeEffectiveArea" type="number" min="0" step="0.001" placeholder="仕様値を入力" oninput="calcSmoke()"><b>m²</b></div></div>
+<div id="smokeEffectiveAreaField"><label id="smokeEffectiveAreaLabel">有効開口面積</label><div class="unit"><input id="smokeEffectiveArea" type="number" min="0" step="0.001" placeholder="仕様値を入力" oninput="calcSmoke()"><b>m²</b></div></div>
 <div id="smokeRateField" class="metric"><small>有効開口率（自動計算）</small><div class="v" id="smokeRateDisplay">-</div><small>%</small><input id="smokeRate" type="hidden"></div>
 </div>
 <p class="note" id="smokeAreaHelp">サイズ一覧または幅・高さから開口面積を自動計算します。有効開口面積は仕様値を入力してください。有効開口率は開口面積と有効開口面積から自動計算します。</p>
@@ -69,7 +69,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:
 </div></div>
 <div class="result" style="margin-top:14px">
 <div class="metric"><small>平均風速</small><div class="v" id="smokeAvg">-</div><small>m/s</small></div>
-<div class="metric"><small>有効開口面積</small><div class="v" id="smokeArea">未入力</div><small>m²</small></div>
+<div class="metric"><small id="smokeResultAreaLabel">開口面積</small><div class="v" id="smokeArea">未入力</div><small>m²</small></div>
 <div class="metric"><small>実測風量</small><div class="v" id="smokeMeasured">-</div><small>m³/min</small></div>
 <div class="metric"><small>実測風量</small><div class="v" id="smokeMeasuredH">-</div><small>m³/h</small></div>
 </div>
@@ -169,11 +169,15 @@ function toggleSmokeAreaMode(){
  $("smokeWidthField").style.display=mode==="dimensions"?"block":"none";
  $("smokeHeightField").style.display=mode==="dimensions"?"block":"none";
  $("smokeW").disabled=mode!=="dimensions";$("smokeH").disabled=mode!=="dimensions";
+ // サイズ一覧・幅高さ入力では、外形の開口面積だけを表示する。
+ // 有効開口面積と有効開口率は、直接入力モードのときだけ表示する。
+ $("smokeEffectiveAreaField").style.display=mode==="direct"?"block":"none";
  $("smokeRateField").style.display=mode==="direct"?"block":"none";
- $("smokeEffectiveAreaLabel").textContent="有効開口面積";
- $("smokeOuterAreaMetric").style.display=mode==="direct"?"none":"block"; $("smokeOuterAreaDirectField").style.display=mode==="direct"?"block":"none";
- $("smokeAreaHelp").textContent=mode==="direct"?"有効開口面積と外形の開口面積を入力すると、有効開口率を自動計算します。外形面積は器具の寸法から求めるか、直接入力してください。":"開口面積はサイズまたは幅・高さから自動計算します。有効開口面積を入力すると、有効開口率を自動計算します。";
+ $("smokeOuterAreaMetric").style.display=mode==="direct"?"none":"block";
+ $("smokeOuterAreaDirectField").style.display=mode==="direct"?"block":"none";
+ $("smokeAreaHelp").textContent=mode==="direct"?"有効開口面積と外形の開口面積を入力すると、有効開口率を自動計算します。":"サイズ一覧または幅・高さから開口面積を自動計算します。有効開口面積・有効開口率はこの入力方法では表示しません。";
 }
+
 function smokeOuterArea(){
  const mode=$("smokeAreaMode").value;
  if(mode==="direct")return Number($("smokeOuterAreaDirect").value)||0;
@@ -191,11 +195,9 @@ function calcSmoke(){
  if(mode==="direct"){
   effective=effective===null?0:effective;
   if(outer>0 && effective>0){rate=effective/outer*100;$("smokeRate").value=rate.toFixed(1);$("smokeRateDisplay").textContent=rate.toFixed(1);}else{$("smokeRate").value="";$("smokeRateDisplay").textContent="-";}
- } else if(outer>0 && effective!==null){
-  rate=effective/outer*100;
-  $("smokeRate").value=rate.toFixed(1);
-  $("smokeRateDisplay").textContent=rate.toFixed(1);
  } else {
+  // 通常のサイズ・幅高さモードは開口面積を使用し、有効開口面積関連は非表示。
+  effective=outer;
   $("smokeRate").value="";$("smokeRateDisplay").textContent="-";
  }
  $("smokeOuterAreaResult").textContent=outer>0?outer.toFixed(3):"—";
@@ -205,7 +207,7 @@ function calcSmoke(){
  const avg=valid?raw.map(Number).reduce((a,b)=>a+b,0)/4:null;
  const measured=avg!==null&&effective>0?avg*effective*60:null,measuredH=measured===null?null:measured*60;
  $("smokeAvg").textContent=avg===null?"-":avg.toFixed(2);
- $("smokeArea").previousElementSibling.textContent=mode==="direct"?"有効開口面積":"開口面積"; $("smokeArea").textContent=effective>0?effective.toFixed(3):"未入力";
+ $("smokeResultAreaLabel").textContent=mode==="direct"?"有効開口面積":"開口面積"; $("smokeArea").textContent=effective>0?effective.toFixed(3):"未入力";
  $("smokeMeasured").textContent=measured===null?"-":measured.toFixed(2);
  $("smokeMeasuredH").textContent=measuredH===null?"-":Math.round(measuredH).toLocaleString();
  const df=optionalNumber("smokeDesignFlow"),du=$("smokeDesignUnit").value;
